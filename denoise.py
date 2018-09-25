@@ -128,3 +128,39 @@ def get_metadata(audio_path: str, interleaved=True) -> dict:
         "comp_name": comp_name,
         "dtype": dtype
     }
+
+
+def butter(arguments: dict):
+    """
+    butter applies a Butterworth filter to a signal
+    """
+    _in, _out = arguments["--input"], arguments["--output"]
+    low, high = float(arguments["--low"]), float(arguments["--high"])
+    cutoff = float(arguments["--cutoff"])
+    filter_type = arguments["--filter-type"]
+    order = float(arguments["--filter-order"])
+    metadata = get_metadata(arguments["--input"])
+
+    nyquist = metadata["sample_rate"] * 0.5
+
+    if filter_type in ("lowpass", "highpass"):
+        b, a = signal.butter(order, cutoff / nyquist, btype=filter_type)
+    elif filter_type in ("bandpass", "bandstop"):
+        Wn = [low / nyquist, high / nyquist]
+        b, a = signal.butter(order, Wn, btype=filter_type)
+
+    filtered = signal.lfilter(b, a, metadata["channels"][0]).astype(metadata["dtype"])
+
+    with wave.open(_out, "w") as output_audio:
+        output_audio.setparams(
+            (
+                1,
+                metadata["sample_width"],
+                metadata["sample_rate"],
+                metadata["n_frames"],
+                metadata["comp_type"],
+                metadata["comp_name"]
+            )
+        )
+        output_audio.writeframes(filtered.tobytes('C'))
+        output_audio.close()

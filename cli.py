@@ -27,14 +27,14 @@ from scipy import signal
 
 assert sys.version_info >= (3, 6), "Python 3.6+ required for this script"
 
-from denoise import *
+import denoise
 
 __author__ = "Pietro Mascolo"
 __version__ = "0.1"
 DEFAULT_WINDOW = "hamming"
 
 
-def denoise():
+def cli():
     """
     denoise removes low and high frequency band from
     a wav file and reports the result
@@ -42,7 +42,7 @@ def denoise():
     usage = f"""Denoise.
 
         Usage:
-        denoise.py --input=<noisy> --output=<denoised> [--low=<low>] [--high=<high>] [--window=<window>] [--cutoff=<cutoff>] [--algo=<algo>]
+        denoise.py --input=<noisy> --output=<denoised> [--low=<low>] [--high=<high>] [--window=<window>] [--cutoff=<cutoff>] [--algo=<algo>] [--filter-type=<filter> | --filter-order=<order>]
         denoise.py (-h | --help)
 
         Options:
@@ -51,10 +51,15 @@ def denoise():
         --output=<denoised>     Path to denoised audio file.
         --window=<window>       Algorithm/technique for denoising [default: {DEFAULT_WINDOW}].
         --cutoff=<cutoff>       Cutoff frequency for the filter (Hz) [default: 400].
-        --algo=<algo>           Filtering technique to use [default: window_filter]
+        --algo=<algo>           Filtering technique to use [default: window_filter].
+        --low=<low>             Low frequency for Butterworth filter. Should be between 0 and 1 wrt Nyquist frequency [default: 0.0001].
+        --high=<high>           High frequency for Butterworth filter Should be between 0 and 1 wrt Nyquist frequency [default: 0.9999].
+        --filter-type=<filter>  Type of filter for Butterworth. Should be one of 'lowpass’, ‘highpass’, ‘bandpass’, ‘bandstop’ [default: lowpass].
+        --filter-order=<order>  Order of Butterworth filter [default: 5].
     """
     OPERATORS = {
-        "window_filter": window_filter,
+        "window_filter": denoise.window_filter,
+        "butterworth": denoise.butter
     }
     arguments = docopt.docopt(usage, version=f"denoise {__version__}")
 
@@ -68,7 +73,5 @@ def denoise():
     operator(arguments)
 
 
-
-
 if __name__ == "__main__":
-    denoise()
+    cli()
